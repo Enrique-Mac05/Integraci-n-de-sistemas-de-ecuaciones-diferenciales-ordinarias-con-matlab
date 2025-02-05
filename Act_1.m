@@ -1,11 +1,11 @@
 % Parametros
 Ip = 0.0079;  % Pendulum Moment of Inertia (kg*m^2)
 Mc = 0.7031;  % Lumped Mass of the cart system (kg)
-Lp = 0.3312;  % Distance from Pivot to Center of Gravity (m)
-Mp = 0.32;    % Pendulum Mass with Fitting (kg)
-Bc = 1.3;     % Equivalent Viscous Damping Coefficient at Motor Pinion (Ns/m)
-q = 9.81;     % Gravitational Constant (m/s^2)
-Bp = 0.0121;  % Viscous Damping Coefficient at Pendulum Axis (Nms/rad)
+Lp = 0.3302;  % Distance from Pivot to Center of Gravity (m)
+Mp = 0.23;    % Pendulum Mass with Fitting (kg)
+Beq = 4.3;     % Equivalent Viscous Damping Coefficient at Motor Pinion (Ns/m)
+g = 9.81;     % Gravitational Constant (m/s^2)
+Bp = 0.0024;  % Viscous Damping Coefficient at Pendulum Axis (Nms/rad)
 
 % Condiciones iniciales
 alpha0 = deg2rad(1);  % Ángulo Inicial (rad)
@@ -16,9 +16,9 @@ alphadot0 = 0;        % Velocidad angular del pendulo (rad/s)
 initial_conditions = [x0; xdot0; alpha0; alphadot0];
 
 % Tiempo de simulación
-tspan = [0, 10];  
+tspan = [0, 45];  
 
-inverted_pendulum = @(t, y) pendulum_dynamics(t, y, Ip, Mc, Mp, Lp, Bc, q, Bp);
+inverted_pendulum = @(t, y) pendulum_dynamics(t, y, Ip, Mc, Mp, Lp, Beq, g, Bp);
 
 [t, y] = ode45(inverted_pendulum, tspan, initial_conditions);
 
@@ -53,7 +53,6 @@ title('Respuesta de la posición del carro', 'FontSize', 14, 'FontWeight', 'bold
 grid on;
 set(gca, 'FontSize', 12, 'FontWeight', 'bold');
 
-% Plot pendulum angle
 subplot(2, 1, 2);
 plot(t, alpha, 'r-', 'LineWidth', 2); 
 xlabel('Tiempo (s)', 'FontSize', 12, 'FontWeight', 'bold');
@@ -63,7 +62,7 @@ grid on;
 set(gca, 'FontSize', 12, 'FontWeight', 'bold');
 
 % Definicion de las funciones
-function dydt = pendulum_dynamics(~, y, Ip, Mc, Mp, Lp, Bc, q, Bp)
+function dydt = pendulum_dynamics(~, y, Ip, Mc, Mp, Lp, Beq, g, Bp)
     % Extraer variables de estado
     x = y(1);          % Posición del carro (m)
     xdot = y(2);       % Velocidad del carro (m/s)
@@ -79,11 +78,11 @@ function dydt = pendulum_dynamics(~, y, Ip, Mc, Mp, Lp, Bc, q, Bp)
     sin_alpha = sin(alpha);
     
     % Fuerzas del carro y pendulo
-    numerator_x = (F + Mp * Lp * sin_alpha * alphadot^2 - Mp * Lp * q * cos_alpha * sin_alpha - Bc * xdot - Bp * Lp * alphadot * cos_alpha);
+    numerator_x = (F + Mp * Lp * sin_alpha * alphadot^2 - Mp * Lp * g * cos_alpha * sin_alpha - Beq * xdot - Bp * Lp * alphadot * cos_alpha);
     denominator_x = (M - Mp^2 * Lp^2 * cos_alpha^2 / H);
     xddot = numerator_x / denominator_x;
     
-    numerator_alpha = ((Mp * Lp * q * sin_alpha - Bp * alphadot - Mp * Lp * cos_alpha * xddot));
+    numerator_alpha = ((Mp * Lp * g * sin_alpha - Bp * alphadot - Mp * Lp * cos_alpha * xddot));
     alphaddot = numerator_alpha / H;
     
     % Derivadas

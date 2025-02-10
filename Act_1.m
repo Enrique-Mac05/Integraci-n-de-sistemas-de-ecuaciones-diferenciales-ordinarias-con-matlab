@@ -16,7 +16,7 @@ alphadot0 = 0;        % Velocidad angular del pendulo (rad/s)
 initial_conditions = [x0; xdot0; alpha0; alphadot0];
 
 % Tiempo de simulación
-tspan = [0, 45];  
+tspan = [0, 8];  
 
 inverted_pendulum = @(t, y) pendulum_dynamics(t, y, Ip, Mc, Mp, Lp, Beq, g, Bp);
 
@@ -71,19 +71,19 @@ function dydt = pendulum_dynamics(~, y, Ip, Mc, Mp, Lp, Beq, g, Bp)
     
     % Coeficientes de las ecuaciones
     M = Mc + Mp;        % Masa total
-    H = Ip + Mp * Lp^2; % Momento de inercia
     F = 0;              % Fuerzas externas
     
     cos_alpha = cos(alpha);
     sin_alpha = sin(alpha);
     
     % Fuerzas del carro y pendulo
-    numerator_x = (F + Mp * Lp * sin_alpha * alphadot^2 - Mp * Lp * g * cos_alpha * sin_alpha - Beq * xdot - Bp * Lp * alphadot * cos_alpha);
-    denominator_x = (M - Mp^2 * Lp^2 * cos_alpha^2 / H);
+    numerator_x = (F + Mp^2*Lp^2*g*cos_alpha*sin_alpha - (Ip+Mp*Lp^2)*Beq*xdot - (Ip*Mp*Lp - Mp^2*Lp^3)*alphadot^2*sin_alpha - Mp*Lp*alphadot*cos_alpha*Bp);
+    denominator_x = M*Ip + Mc*Mp*Lp^2 + Mp^2*Lp^2*sin_alpha^2;
     xddot = numerator_x / denominator_x;
     
-    numerator_alpha = ((Mp * Lp * g * sin_alpha - Bp * alphadot - Mp * Lp * cos_alpha * xddot));
-    alphaddot = numerator_alpha / H;
+    numerator_alpha = (M*Mp*g*Lp*sin_alpha - M*Bp*alphadot + F - Mp^2*Lp^2*alphadot^2*sin_alpha*cos_alpha - Beq*Mp*Lp*xdot*cos_alpha);
+    denominator_alpha = M*Ip + Mc*Mp*Lp^2 + Mp^2*Lp^2*sin_alpha^2;
+    alphaddot = numerator_alpha /denominator_alpha;
     
     % Derivadas
     dydt = [xdot;
